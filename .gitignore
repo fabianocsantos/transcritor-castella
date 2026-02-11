@@ -1,0 +1,12 @@
+.venv/
+temp/
+saida/
+entrada/
+__pycache__/
+*.log
+*.wav
+*.mp4
+*.webm
+*.m4a
+_LAST_JOB_DIR.txt
+cookies.txt

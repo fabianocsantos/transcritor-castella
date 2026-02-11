@@ -1,0 +1,5 @@
+version: v3.3.2
+date: 2026-01-30_16-45-24
+
+notes:
+antes do link universal
