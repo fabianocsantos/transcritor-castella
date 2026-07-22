@@ -9,9 +9,17 @@ from pathlib import Path
 from faster_whisper import WhisperModel
 
 
-APP_VERSION = "v4.8 Dev - Interface"
+APP_VERSION = "v4.9 Dev - Preparado para EXE"
 
-BASE_DIR = Path(__file__).resolve().parent
+
+def obter_base_dir():
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+
+    return Path(__file__).resolve().parent
+
+
+BASE_DIR = obter_base_dir()
 TEMP_DIR = BASE_DIR / "temp"
 SAIDA_DIR = BASE_DIR / "saida"
 ENTRADA_DIR = BASE_DIR / "entrada"
@@ -377,6 +385,8 @@ def processar_transcricao(entrada, modo):
         log()
         log("Transcrição concluída com sucesso.")
         log(f"Pasta: {pasta_job}")
+
+        return pasta_job
 
     finally:
         if audio_temporario:

@@ -1,19 +1,16 @@
 import os
 import subprocess
-import sys
 import threading
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+import app as motor
+
 
 APP_NAME = "Transcritor"
-APP_VERSION = "v0.2 Interface Integrada"
-
-BASE_DIR = Path(__file__).resolve().parent
-APP_SCRIPT = BASE_DIR / "app.py"
-LAST_JOB_FILE = BASE_DIR / "_LAST_JOB_DIR.txt"
+APP_VERSION = "v0.3 Preparado para EXE"
 
 
 class TranscritorApp(ctk.CTk):
@@ -320,16 +317,6 @@ class TranscritorApp(ctk.CTk):
             )
             return
 
-        if not APP_SCRIPT.exists():
-            messagebox.showerror(
-                "Arquivo não encontrado",
-                (
-                    "O arquivo app.py não foi encontrado "
-                    "na pasta do programa."
-                ),
-            )
-            return
-
         origem = (
             link
             if link
@@ -350,10 +337,7 @@ class TranscritorApp(ctk.CTk):
         )
 
         self.status.configure(
-            text=(
-                "Preparando o vídeo e iniciando "
-                "a transcrição..."
-            ),
+            text="Preparando a transcrição...",
         )
 
         self.barra_progresso.start()
@@ -366,53 +350,17 @@ class TranscritorApp(ctk.CTk):
         thread.start()
 
     def executar_transcricao(self, origem):
-        comando = [
-            sys.executable,
-            str(APP_SCRIPT),
-            "--link",
-            origem,
-        ]
-
-        if self.modo.get() == "accurate":
-            comando.append("--accurate")
-
-        flags_janela = getattr(
-            subprocess,
-            "CREATE_NO_WINDOW",
-            0,
+        modo = (
+            "accurate"
+            if self.modo.get() == "accurate"
+            else "fast"
         )
 
-        ambiente = os.environ.copy()
-        ambiente["PYTHONIOENCODING"] = "utf-8"
-        ambiente["PYTHONUTF8"] = "1"
-
         try:
-            resultado = subprocess.run(
-                comando,
-                cwd=str(BASE_DIR),
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                creationflags=flags_janela,
-                env=ambiente,
+            job_dir = motor.processar_transcricao(
+                origem,
+                modo,
             )
-
-            if resultado.returncode != 0:
-                mensagem_erro = (
-                    resultado.stderr.strip()
-                    or resultado.stdout.strip()
-                    or "Erro desconhecido."
-                )
-
-                self.after(
-                    0,
-                    self.transcricao_com_erro,
-                    mensagem_erro,
-                )
-                return
-
-            job_dir = self.ler_ultimo_job()
 
             self.after(
                 0,
@@ -420,34 +368,40 @@ class TranscritorApp(ctk.CTk):
                 job_dir,
             )
 
-        except Exception as erro:
+        except subprocess.CalledProcessError:
+            self.after(
+                0,
+                self.transcricao_com_erro,
+                (
+                    "Não foi possível baixar o vídeo.\n\n"
+                    "Confira se o link está correto, se o conteúdo "
+                    "está disponível e se o acesso exige login."
+                ),
+            )
+
+        except FileNotFoundError as erro:
             self.after(
                 0,
                 self.transcricao_com_erro,
                 str(erro),
             )
 
-    def ler_ultimo_job(self):
-        if not LAST_JOB_FILE.exists():
-            return None
+        except RuntimeError as erro:
+            self.after(
+                0,
+                self.transcricao_com_erro,
+                str(erro),
+            )
 
-        try:
-            caminho = LAST_JOB_FILE.read_text(
-                encoding="utf-8",
-            ).strip()
-
-            if not caminho:
-                return None
-
-            pasta = Path(caminho)
-
-            if pasta.exists():
-                return pasta
-
-        except OSError:
-            return None
-
-        return None
+        except Exception as erro:
+            self.after(
+                0,
+                self.transcricao_com_erro,
+                (
+                    "Ocorreu um erro inesperado durante a transcrição.\n\n"
+                    f"Detalhes: {erro}"
+                ),
+            )
 
     def transcricao_concluida(self, job_dir):
         self.processando = False
@@ -496,7 +450,7 @@ class TranscritorApp(ctk.CTk):
             text="Não foi possível concluir a transcrição.",
         )
 
-        mensagem_resumida = mensagem_erro[-1500:]
+        mensagem_resumida = str(mensagem_erro)[-1500:]
 
         messagebox.showerror(
             "Erro na transcrição",
