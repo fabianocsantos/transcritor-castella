@@ -71,10 +71,42 @@ def executar_comando(comando):
     comando_legivel = " ".join(str(item) for item in comando)
     log(f"[CMD] {comando_legivel}")
 
-    subprocess.run(
+    creationflags = 0
+    startupinfo = None
+
+    if sys.platform == "win32":
+        creationflags = getattr(
+            subprocess,
+            "CREATE_NO_WINDOW",
+            0,
+        )
+
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+    resultado = subprocess.run(
         comando,
-        check=True,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        creationflags=creationflags,
+        startupinfo=startupinfo,
     )
+
+    if resultado.returncode != 0:
+        detalhes = (
+            resultado.stderr.strip()
+            or resultado.stdout.strip()
+            or "Erro desconhecido ao executar ferramenta externa."
+        )
+
+        raise RuntimeError(
+            "Não foi possível preparar o áudio do vídeo.\n\n"
+            f"Detalhes:\n{detalhes}"
+        )
 
 
 def criar_pasta_job(fonte):
@@ -431,16 +463,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-
-    except subprocess.CalledProcessError:
-        print(
-            "\nNão foi possível baixar o vídeo.\n\n"
-            "Confira se o link está correto, se o conteúdo está "
-            "disponível e se o acesso exige login.",
-            file=sys.stderr,
-            flush=True,
-        )
-        sys.exit(1)
 
     except FileNotFoundError as erro:
         print(

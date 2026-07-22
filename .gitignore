@@ -10,3 +10,7 @@ __pycache__/
 *.m4a
 _LAST_JOB_DIR.txt
 cookies.txt
+# PyInstaller
+build/
+dist/
+*.spec
