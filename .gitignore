@@ -14,3 +14,6 @@ cookies.txt
 build/
 dist/
 *.spec
+# Ferramentas grandes locais
+tools/ffmpeg.exe
+tools/ffprobe.exe

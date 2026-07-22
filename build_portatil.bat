@@ -109,7 +109,25 @@ if not exist tools\yt-dlp.exe (
     exit /b 1
 )
 
+if not exist tools\ffmpeg.exe (
+    echo.
+    echo ERRO: tools\ffmpeg.exe nao encontrado.
+    echo.
+    pause
+    exit /b 1
+)
+
+if not exist tools\ffprobe.exe (
+    echo.
+    echo ERRO: tools\ffprobe.exe nao encontrado.
+    echo.
+    pause
+    exit /b 1
+)
+
 copy /y tools\yt-dlp.exe dist\Transcritor\tools\yt-dlp.exe >nul
+copy /y tools\ffmpeg.exe dist\Transcritor\tools\ffmpeg.exe >nul
+copy /y tools\ffprobe.exe dist\Transcritor\tools\ffprobe.exe >nul
 
 echo.
 echo ==================================================

@@ -9,7 +9,7 @@ from pathlib import Path
 from faster_whisper import WhisperModel
 
 
-APP_VERSION = "v4.9 Dev - Preparado para EXE"
+APP_VERSION = "v4.10 Dev - FFmpeg Portatil"
 
 
 def obter_base_dir():
@@ -26,6 +26,8 @@ ENTRADA_DIR = BASE_DIR / "entrada"
 TOOLS_DIR = BASE_DIR / "tools"
 
 YTDLP_EXE = TOOLS_DIR / "yt-dlp.exe"
+FFMPEG_EXE = TOOLS_DIR / "ffmpeg.exe"
+FFPROBE_EXE = TOOLS_DIR / "ffprobe.exe"
 COOKIES_FILE = BASE_DIR / "cookies.txt"
 LAST_JOB_FILE = BASE_DIR / "_LAST_JOB_DIR.txt"
 
@@ -132,12 +134,24 @@ def baixar_audio(link, fonte):
             "O arquivo tools\\yt-dlp.exe não foi encontrado."
         )
 
+    if not FFMPEG_EXE.exists():
+        raise FileNotFoundError(
+            "O arquivo tools\\ffmpeg.exe não foi encontrado."
+        )
+
+    if not FFPROBE_EXE.exists():
+        raise FileNotFoundError(
+            "O arquivo tools\\ffprobe.exe não foi encontrado."
+        )
+
     identificador = uuid.uuid4().hex[:8]
     arquivo_wav = TEMP_DIR / f"{fonte}_{identificador}.wav"
 
     comando = [
         str(YTDLP_EXE),
         "--no-playlist",
+        "--ffmpeg-location",
+        str(TOOLS_DIR),
     ]
 
     if COOKIES_FILE.exists():
